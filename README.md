@@ -14,7 +14,7 @@ Requirements doc:
 
 I feel that is a very successful proces and what it has produced is actually quite good for my purposes.  The “What are all the questions I need to answer to get a detailed requirement specification for the above?” is a powerful prompt addition.
 
-I am working on the design doc right now.  It will probably have a similar iterative process to the requirements doc.  It's a bit trickier than the requirements doc because design is a much harder problem than features.
+I am working on the design doc right now.  It will probably have a similar iterative process to the requirements doc.  It's a bit trickier than the requirements doc because design is a much harder problem than features.  Right now, I'm using a tool similar to https://github.com/qrdlgit/simbiotico  but is more textual based.  I'll release a video soon, but it's somewhat similar to this: https://www.youtube.com/watch?v=MIfhunAwZew  (true story:  I just found this video today, and yes, it's pretty much what I've built.  Zeitgeist and serendipity are a thing.
 
 For the code, I've tried this in the past with mixed success:
 
