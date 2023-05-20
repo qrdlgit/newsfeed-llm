@@ -3,6 +3,7 @@ import logging
 import threading
 import time
 from abc import ABC, abstractmethod
+from FilterSubsystemClient import FilterSubsystemClient
 
 # Use Python's built-in logging module for logging
 logging.basicConfig(filename='feed_processor.log', level=logging.DEBUG)
@@ -13,7 +14,7 @@ class FeedManager:
 
     def add_feed(self, config):
         # Create a FeedFetcher based on the feed type and configuration
-        feed_fetcher = FeedFetcher(config)
+        feed_fetcher = FeedFetcher.getFeedFetcher(config)
         self.feed_fetchers.append(feed_fetcher)
 
     def get_feeds(self):
@@ -27,9 +28,18 @@ class FeedItem:
         return self.text
 
 class FeedFetcher(ABC):
-    def __init__(self, feed_name, config):
-        self.feed_name = feed_name
+    def __init__(self, config):
         self.config = config
+
+    @staticmethod
+    def getFeedFetcher(config):
+        try:
+            module = importlib.import_module(config['src'])
+            class_ = getattr(module, config['class'])
+            return class_(config)
+        except Exception as e:
+            logging.error(f'Failed to load FeedFetcher from config {config}: {e}')
+            return None
 
     @abstractmethod
     def get_new_feed_items(self):
@@ -39,6 +49,16 @@ class FilterSubsystemClient(ABC):
     def __init__(self, config):
         self.config = config
 
+    @staticmethod
+    def getSubsystemClient(config):
+        try:
+            module = importlib.import_module(config['src'])
+            class_ = getattr(module, config['class'])
+            return class_(config)
+        except Exception as e:
+            logging.error(f'Failed to load FilterSubsystemClient from config {config}: {e}')
+            return None
+
     @abstractmethod
     def get_score(self, item):
         pass
@@ -47,6 +67,10 @@ class SummarySubsystemClient(ABC):
     def __init__(self, config):
         self.config = config
 
+    @staticmethod
+    def getSubsystemClient(config):
+        return FilterSubsystemClient.getSubystemClient(config)
+
     @abstractmethod
     def get_summary(self, item):
         pass
@@ -54,6 +78,10 @@ class SummarySubsystemClient(ABC):
 class DataStorageSubsystemClient(ABC):
     def __init__(self, config):
         self.config = config
+
+    @staticmethod
+    def getSubsystemClient(config):
+        return FilterSubsystemClient.getSubystemClient(config)
 
     @abstractmethod
     def store_item(self, item):
@@ -84,10 +112,10 @@ class FeedCLI:
 
         # Create SubsystemClient for each subsystem and store it
         for subsystem_name, subsystem_config in config['filter_subsystems'].items():
-            self.subsystem_clients[subsystem_name] = FilterSubsystemClient(subsystem_config)
+            self.subsystem_clients[subsystem_name] = FilterSubsystemClient.getSubsystemClient(subsystem_config)
 
-        self.subsystem_clients['DataStorage'] = DataStorageSubsystemClient(subsystem_config)
-        self.subsystem_clients['Summary'] = SummarySubsystemClient(subsystem_config)
+        self.subsystem_clients['DataStorage'] = DataStorageSubsystemClient.getSubsystemClient(subsystem_config)
+        self.subsystem_clients['Summary'] = SummarySubsystemClient.getSubsystemClient(subsystem_config)
 
 
         logging.info("System started. Processing feeds at intervals of {} seconds.".format(config['processing_interval']))
@@ -107,7 +135,8 @@ class FeedCLI:
         # Get new feed items
         items = feed_fetcher.get_new_feed_items()
 
-        for item in items:
+        for item_txt in items:
+            item = {'text':item_text}
             # Check duplication
             if self.subsystem_clients['Duplication'].get_score(item) > config['duplication_threshold']:
                 continue

@@ -1,0 +1,18 @@
+from pymongo import MongoClient
+from DataStorageSubsystemClient import DataStorageSubsystemClient
+
+class MongoDataStorageSubsystemClient(DataStorageSubsystemClient):
+    def __init__(self, config):
+        super().__init__(config)
+        self.client = MongoClient(config["mongo_uri"])
+        self.db = self.client[config["db_name"]]
+        self.collection = self.db[config["collection_name"]]
+
+    def store_item(self, item):
+        try:
+            self.collection.insert_one(item)
+        except Exception as e:
+            self.handle_error(e)
+
+    def handle_error(self, error):
+        print(f"An error occurred while storing item in MongoDB: {error}")
