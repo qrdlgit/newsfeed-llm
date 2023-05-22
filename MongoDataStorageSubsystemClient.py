@@ -1,5 +1,5 @@
 from pymongo import MongoClient
-from DataStorageSubsystemClient import DataStorageSubsystemClient
+from FeedCLI import DataStorageSubsystemClient
 
 class MongoDataStorageSubsystemClient(DataStorageSubsystemClient):
     def __init__(self, config):
@@ -16,3 +16,11 @@ class MongoDataStorageSubsystemClient(DataStorageSubsystemClient):
 
     def handle_error(self, error):
         print(f"An error occurred while storing item in MongoDB: {error}")
+
+    def get_items(self):
+        try:
+            items = list(self.collection.find())
+            return items
+        except Exception as e:
+            self.handle_error(e)
+            return []
