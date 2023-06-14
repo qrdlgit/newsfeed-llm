@@ -4,9 +4,9 @@ from FeedCLI import DataStorageSubsystemClient
 class MongoDataStorageSubsystemClient(DataStorageSubsystemClient):
     def __init__(self, config):
         super().__init__(config)
-        self.client = MongoClient(config["mongo_uri"])
-        self.db = self.client[config["db_name"]]
-        self.collection = self.db[config["collection_name"]]
+        self.client = MongoClient(config.get("mongo_uri", "mongodb://192.168.1.86"))
+        self.db = self.client[config.get("db_name","newsfeeds" )]
+        self.collection = self.db[config.get("collection_name", "feeditems")]
 
     def store_item(self, item):
         try:

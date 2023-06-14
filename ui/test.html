@@ -1,0 +1,349 @@
+<head>
+<link href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator_simple.min.css" rel="stylesheet">
+    
+<script type="text/javascript" src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+ </head>
+
+keywork weights: <input type="text" id="key-weights" size=100 value = '{"llm":8000.5, "gpt":8000.4, "chatgpt":100, "openai":100, "ai":100}'> 
+<input type=checkbox id='should-use-key-weights' checked><br/>
+ <input type=button id='select-all'  value='SelAll'/> 
+<input type=button id='deselect-all'  value='DeSelall'/>
+<input type=button id='read-selected'  value='ReadSel'/>
+<input type=button id='book-selected'  value='BookSel'/>
+<input type=button id='refresh'  value='Refresh'/>
+R:<input type=checkbox id='show-read'>
+B:<input type=checkbox id='show-bookmarked-only'>
+<div id="example-table"></div>
+<script>
+    //select row on "select all" button click
+document.getElementById("select-all").addEventListener("click", function(){
+    table.selectRow();
+});
+
+//deselect row on "deselect all" button click
+document.getElementById("deselect-all").addEventListener("click", function(){
+    table.deselectRow();
+});
+
+//read
+document.getElementById("read-selected").addEventListener("click", function(){
+    doActionOnSelected(table, 'markAsRead', true);
+});
+    
+document.getElementById("book-selected").addEventListener("click", function(){
+    doActionOnSelected(table, 'bookmarked', true);
+});
+    
+document.getElementById("refresh").addEventListener("click", function(){
+    table.setData();
+});
+    
+async function filterData(global_data) {
+    if (document.getElementById("should-use-key-weights").checked) {
+        table.setData(get_rows(global_data, JSON.parse(document.getElementById("key-weights").value)));
+    } else {
+        table.setData(global_data);
+
+    }
+}
+document.getElementById("should-use-key-weights").addEventListener("click", function(){
+    console.log(document.getElementById("should-use-key-weights").checked);
+    filterData(global_data);
+});
+
+function notify(rows, notificationString) {
+    new Notification("News", {
+      body: notificationString
+    }); 
+    doActionOnRows(rows, 'notified', true);
+}
+
+// Function to get filtered data and notify
+function notifyFilteredData() {
+  // Get filters from table
+  let filters = table.getFilters();
+  
+  // Get filtered data from table
+  let filteredData = table.searchRows(filters);
+
+  // Process filtered data and create notification string
+  let notificationString = "";
+  filteredData.forEach(row => {
+    let actions = row.getData().actions;
+    let notified = actions && actions.find(action => 'notified' in action);
+    if (!notified) {
+	let rowData = row.getData();
+	try {
+	    notificationString += `${rowData.title} ${new URL(rowData.link).hostname}\n`;
+	} catch(error) {
+	    console.log("rowData error", rowData, error);
+	}
+    }
+  });
+  if (notificationString == "") {
+     return;
+  }
+  // Send notification
+  if (Notification.permission === "granted") {
+      notify(filteredData, notificationString);
+  } else if (Notification.permission !== "denied") {
+    Notification.requestPermission().then(permission => {
+      if (permission === "granted") {
+	  notify(filteredData, notificationString);
+      }
+    });
+  }
+}
+    
+    
+function actionformatter(cell, formatterParams, onRendered) {
+    // Get cell value
+    let actions = cell.getValue();
+    let result = "";
+
+    // Check if actions is not null or undefined
+    if (actions) {
+        let markAsReadExists = actions.find(action => 'markAsRead' in action);
+        let bookmarkedExists = actions.find(action => 'bookmarked' in action);
+        if (markAsReadExists && markAsReadExists.markAsRead === true) {
+            result += 'R';
+        } else {
+            result += 'U';
+        }
+        if (bookmarkedExists && bookmarkedExists.bookmarked === true) {
+            result += 'B';
+        }
+    } else {
+        result = "U"
+    }
+    // Return formatted result
+    return result;
+}
+
+ function customFilter(data, filterParams){
+    //data - the data for the row being filtered
+    //filterParams - params object passed to the filter
+    let read = document.getElementById("show-read").checked;
+    let bookmarked = document.getElementById("show-bookmarked-only").checked;
+    let markAsReadExists = data.actions.find(action => 'markAsRead' in action);
+    let bookmarkedExists = data.actions.find(action => 'bookmarked' in action);
+    if (bookmarked && bookmarkedExists) return true; 
+    if (bookmarked && !bookmarkedExists) return false; 
+    if (read && markAsReadExists) return true;
+    if (!read && markAsReadExists) return false;
+
+    return true;
+}
+    
+      
+document.getElementById("show-read").addEventListener("click", function(){
+ table.setFilter(customFilter, {});     
+});
+   
+ 
+document.getElementById("show-bookmarked-only").addEventListener("click", function(){
+ table.setFilter(customFilter, {});     
+});
+    
+
+async function doActionOnRows(selectedRows, action, value) {
+  
+  let updates = selectedRows.map(row => {
+      let updatedActions;
+      rowData = row.getData();
+      // If actions exist, find and update the specific action if it exists
+      if (rowData.actions) {
+        let actionIndex = rowData.actions.findIndex(a => a[action] !== undefined);
+            if (actionIndex !== -1) {
+              // Action already exists, update its value
+              updatedActions = [...rowData.actions];
+              updatedActions[actionIndex][action] = value;
+            } else {
+              // Action does not exist, add it
+              updatedActions = [...rowData.actions, { [action]: value }];
+            }
+          } else {
+            // Actions do not exist, create it with the new action
+            updatedActions = [{ [action]: value }];
+          }
+          row.update({'actions':updatedActions});
+          let rv = {
+            _id: rowData._id,
+            actions: updatedActions
+          };
+          return rv;
+      });
+    console.log("updates", updates);
+
+  // Perform API request
+  try {
+    let response = await fetch('/api/newsfeeds/do_action', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates)
+    });
+    
+    if (response.ok) {
+      let result = await response.json();
+      console.log(result);
+    } else {
+      console.error('Response:', response.status, response.statusText);
+    }
+  } catch (error) {
+    console.error('Fetch error:', error);
+  }
+}
+
+//function which calls table.getSelectedRows() in tabulator
+//and calls api endpoint app.post('/api/newsfeeds/do_action', 
+async function doActionOnSelected(table, action, value) {
+  // Get selected rows data
+  let selectedRows = table.getSelectedRows();
+  doActionOnRows(selectedRows, action, value);
+}
+
+
+ function textformatter(text) {
+     return text.getValue().substring(0, 64);
+ }
+    
+ function urlformatter(url) {
+  return new URL(url.getValue()).hostname;
+  
+ }
+    
+
+function dateformatter(date) {
+  const now = new Date();
+  const pastDate = new Date(date.getValue());
+  const diffInMs = now.getTime() - pastDate.getTime();
+  
+  const diffInMinutes = Math.round(diffInMs / 1000 / 60);
+  if (diffInMinutes < 120) {
+    return diffInMinutes + ' m';
+  }
+
+  const diffInHours = Math.round(diffInMinutes / 60);
+  if (diffInHours < 48) {
+    return diffInHours + ' h';
+  }
+
+  const diffInDays = Math.round(diffInHours / 24);
+  return diffInDays + ' d';
+}
+
+function get_density(text, dict_density) {
+    // Convert text to lower case and split it into words
+    const words = text.substring(0,255).toLowerCase().split(/\s+/);
+    // Initialize a new object to hold the density of each keyword
+    const density = {};
+    var dict_count = {};
+    for (const keyword in dict_density) {
+        dict_count[keyword] = 0;
+    }
+    
+    // Count the occurrences of each keyword in the text
+    for (const word of words) {
+        if (dict_count[word] !== undefined) {
+            dict_count[word]++;
+        }
+    }
+
+    // Calculate the density of each keyword
+    for (const keyword in dict_density) {
+        
+        density[keyword] = dict_count[keyword] / words.length;
+    }
+
+    return density;
+}
+    
+function get_rows(json_array, density_dict) {
+    const result = [];
+
+    for (let element of json_array) {
+        const densities = get_density(element['text'], {...density_dict}); // Use a copy to avoid side effects
+        let weightedDensity = 0;
+
+        for (let keyword in densities) {
+            weightedDensity += densities[keyword] * density_dict[keyword];
+        }
+        if (weightedDensity > 1) {
+            result.push(element);
+        }
+    }
+
+    return result;
+}
+    
+var timeout = null;
+function alert(msg) {
+    table.alert(msg);
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(function(){
+    table.clearAlert();
+    }, 1000);
+}
+    
+    
+var rowCount = document.createElement("span");
+    
+var table = new Tabulator("#example-table", {
+    pagination: "local", //enable local pagination.
+    paginationSize: 25, // set number of rows per page
+    paginationSizeSelector: [25, 50, 100], // values for page size selector
+    paginationCounter:"rows",
+    height:"800px",
+    selectable:true,
+    layout:"fitDataStretch",
+    initialSort:[
+        {column:"date", dir:"desc"}, //sort by this first
+    ],
+    columns:[
+    {title:"Title", field:"title",  headerFilter:"input", formatter:textformatter},
+    {title:"Date", field:"date", formatter:dateformatter},
+    {title:"Link", field:"link",  formatter:"link", formatterParams:{    target:"_blank", label: urlformatter}},
+    {title:"Actions", field:"actions",formatter:actionformatter},
+    {title:"Text", field:"text",  headerFilter:"input"},
+    ],
+});
+ 
+table.setFilter(customFilter, {}); 
+    
+function fetchData() {
+    return fetch('/api/newsfeeds')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .catch(error => {
+            console.error('There has been a problem with your fetch operation:', error);
+        });
+}
+
+    
+async function refreshData() {
+// Fetch new data
+fetchData().then(function(newData){
+    // Update the table with the new data
+    filterData(newData).then(function(){
+	notifyFilteredData();
+        global_data = newData;
+        // Update the row count each time the table data is updated
+        rowCount.innerHTML = table.getRows().length;
+    });
+});
+}
+refreshData();
+
+// Request permission
+Notification.requestPermission();
+    
+    
+setInterval(refreshData, 60000);   
+var global_data = null;
+
+</script>

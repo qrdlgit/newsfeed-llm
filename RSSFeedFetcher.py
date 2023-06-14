@@ -12,8 +12,11 @@ class RSSFeedFetcher(FeedFetcher):
         self.text_properties = config.get('text_properties', ['title', 'description'])
         self.feed_weight = config.get('feed_weight', 1)
         self.feed_type = config.get('feed_type', "news")
+        self.top_config = config.get('top', {})
+        self.back_days = self.top_config.get('back_days',1)
+
         self.seen_items = {}
-        self.last_seen_date = datetime.now() - timedelta(days=1)
+        self.last_seen_date = datetime.now() - timedelta(days=self.back_days)
 
     def get_date(self, entry):
         if 'published_parsed' in entry:

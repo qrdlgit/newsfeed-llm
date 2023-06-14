@@ -36,7 +36,7 @@ class FeedFetcher(ABC):
     @staticmethod
     def getFeedFetcher(config):
         try:
-            src = config.get('src', 'RSSFeedFetcher')
+            src = config.get('src', 'SimpleRSSFeedFetcher')
             module = importlib.import_module(src)
             class_ = getattr(module, src)
             logging.info(f"getFeedFetcher class {class_}")
@@ -92,18 +92,20 @@ class FeedCLI:
         with open("settings.json") as file:
             config = json.load(file)
 
+        db = DataStorageSubsystemClient.getSubsystemClient(config['db_subsystem'])
+        self.subsystem_clients['DataStorage'] = db
+        
         # Use FeedManager to add feeds based on configuration
         feed_count = config.get('feed_count',-1)
         count = 0
         for feed_config in config['feeds']:
+            feed_config['top'] = config
+            feed_config['db'] = db
             self.feed_manager.add_feed(feed_config)
             count = count + 1
             if count > feed_count:
                 break
 
-        db = DataStorageSubsystemClient.getSubsystemClient(config['db_subsystem'])
-        self.subsystem_clients['DataStorage'] = db
-        
         # Create SubsystemClient for each subsystem and store it
         for subsystem_config in config['subsystems']:
             subsystem_config['db'] = db
@@ -132,15 +134,17 @@ class FeedCLI:
         items = feed_fetcher.get_new_feed_items()
 
         for item in items:
-            if self.subsystem_clients['Local'].get_score(item) < config['local_threshold']:
+            with open('titles.txt','a') as f:
+                f.write(item['title']+"\n")
+            if self.subsystem_clients['Local'].get_score(item) > config['local_threshold']:
                 continue
 
             # Check duplication
-            if self.subsystem_clients['Duplicate'].get_score(item) < config['duplicate_threshold']:
+            if self.subsystem_clients['Duplicate'].get_score(item) > config['duplicate_threshold']:
                 continue
 
             # Process other subsystems
-            item['Summary'] = self.subsystem_clients['Summary'].get_summary(item)
+            # item['Summary'] = self.subsystem_clients['Summary'].get_summary(item)
             item['Relevance'] = self.subsystem_clients['Relevance'].get_score(item)
             item['Quality'] = self.subsystem_clients['Quality'].get_score(item)
             item['Credibility'] = self.subsystem_clients['Credibility'].get_score(item)

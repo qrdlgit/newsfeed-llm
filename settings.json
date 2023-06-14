@@ -1,0 +1,90 @@
+{
+
+    "processing_interval":180,
+    "local_threshold":9999999,
+    "duplicate_threshold":1,
+    "back_days":5,
+    "db_subsystem": {
+	"src":"MongoDataStorageSubsystemClient",
+	"mongo_uri":"mongodb://192.168.1.86",
+	"db_name":"newsfeeds",
+	"collection_name": "feeditems"
+    },
+    "subsystems":[
+	{
+	    "name":"Duplicate", 
+	    "src":"SimpleDuplicateFilterSubsystemClient",
+	    "similarity_threshold":0.85
+	},
+	{"name":"Credibility", "src":"StubFilterSubsystemClient"},
+	{"name":"Quality", "src":"StubFilterSubsystemClient"},
+	{"name":"Relevance", "src":"StubFilterSubsystemClient"},
+	{"name":"Freshness", "src":"StubFilterSubsystemClient"},
+	{"name":"Local", "src":"StubFilterSubsystemClient"}
+    ],
+    "subsystems_ignore": [
+	{"name":"Credibility", "src":"CredibilityFilterSubsystemClient"},
+	{"name":"Freshness", "src":"FreshnessFilterSubsystemClient"},
+	{
+	    "name":"Local", "src":"LocalFilterSubsystemClient",
+	    "keyword_weights":{
+		"news":{"gpt":1, "llm":1.2, "openai":0.8, " ai ":0.5},
+		"arxiv":{"microsoft":1, "@openai":1.2, "@mit.edu":0.8, "deepmind":0.5, "small language model":100}
+	    }
+	},
+	{"name":"Quality", "src":"QualityFilterSubsystemClient"},
+	{"name":"Relevance", "src":"RelevanceFilterSubsystemClient"}
+	   
+    ],
+    "feed_count":5000,
+    "feeds":[
+{"feed_url":"https://www.theblackvault.com/documentarchive/feed/", "weight":2},
+{"feed_url":"http://export.arxiv.org/rss/cs.AI", "weight":2, "feed_type":"arxiv"},
+{"feed_url":"https://techcrunch.com/feed/", "weight":2},
+ {"feed_url":"http://www.theverge.com/rss/frontpage", "weight":2},
+ {"feed_url":"https://mashable.com/feeds/rss/all", "weight":2},
+ {"feed_url":"https://www.wired.com/feed/rss", "weight":2},
+ {"feed_url":"https://gizmodo.com/rss", "weight":2},
+ {"feed_url":"https://www.cnet.com/rss/news/", "weight":2},
+ {"feed_url":"https://www.engadget.com/rss.xml", "weight":2},
+ {"feed_url":"https://www.zdnet.com/news/rss.xml", "weight":2},
+ {"feed_url":"http://feeds.feedburner.com/venturebeat/SZYF", "weight":1.5},
+ {"feed_url":"https://readwrite.com/feed/?x=1", "weight":1.5},
+ {"feed_url":"https://techtoday.co/feed/", "weight":1.5},
+ {"feed_url":"https://firstfinger.in/rss/", "weight":1.5},
+ {"feed_url":"https://www.spyopinion.com/feed/", "weight":1.5},
+ {"feed_url":"https://blog.feedspot.com/technology_rss_feeds/", "weight":1.5},
+ {"feed_url":"https://techtalksick.com/feed/", "weight":1.5},
+ {"feed_url":"https://gizmosforyou.com/feed/"},
+ {"feed_url":"https://www.xavor.com/feed/"},
+ {"feed_url":"https://blog.feedspot.com/technology_rss_feeds/"},
+ {"feed_url":"https://techspices.com/feed/"},
+ {"feed_url":"http://www.infoworld.com/index.rss"},
+ {"feed_url":"https://www.techhive.com/feed"},
+ {"feed_url":"https://www.droidviews.com/feed/"},
+ {"feed_url":"https://feeds.feedburner.com/RedmondPie"},
+ {"feed_url":"https://mobilesyrup.com/feed/"},
+ {"feed_url":"http://www.campaignlive.co.uk/rss/brand/tech"},
+ {"feed_url":"https://www.droid-life.com/feed/"},
+ {"feed_url":"https://blog.feedspot.com/technology_rss_feeds/"},
+ {"feed_url":"http://feeds.bbci.co.uk/news/technology/rss.xml"},
+ {"feed_url":"http://rss.nytimes.com/services/xml/rss/nyt/Technology.xml"},
+ {"feed_url":"https://feeds.feedburner.com/IeeeSpectrumFullText"},
+ {"feed_url":"http://feeds.howtogeek.com/HowToGeek"},
+ {"feed_url":"https://www.digitaltrends.com/feed/"},
+ {"feed_url":"https://feeds.macrumors.com/MacRumors-All"},
+ {"feed_url":"http://feeds.arstechnica.com/arstechnica/technology-lab"},
+ {"feed_url":"https://feeds.feedburner.com/oreilly/radar/atom"},
+ {"feed_url":"https://blog.feedspot.com/technology_rss_feeds/"},
+ {"feed_url":"http://rss.slashdot.org/Slashdot/slashdotMain?format=xml"},
+ {"feed_url":"https://www.vox.com/rss/recode/index.xml"},
+ {"feed_url":"http://www.techspot.com/backend.xml"},
+ {"feed_url":"http://feed.androidauthority.com/"},
+ {"feed_url":"http://tech.firstpost.com/feed"},
+ {"feed_url":"https://www.androidcentral.com/rss.xml"},
+ {"feed_url":"http://www.macworld.com/index.rss"}
+
+ ]
+
+
+}
