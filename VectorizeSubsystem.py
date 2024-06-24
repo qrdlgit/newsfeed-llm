@@ -5,7 +5,7 @@ import utils, sklearn.metrics.pairwise
 import sentence_transformers
 import gc, numpy as np
 from scipy.sparse import csr_matrix, vstack
-sm = sentence_transformers.SentenceTransformer("./models/BAAI_bge-small-en-v1.5")
+sm = sentence_transformers.SentenceTransformer("BAAI/bge-small-en-v1.5")
 
 class VectorizeSubsystem(ABC):
     def __init__(self, config):

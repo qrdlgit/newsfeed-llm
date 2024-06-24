@@ -23,11 +23,11 @@
 	    "src":"SimpleDuplicateFilterSubsystem",
 	    "similarity_threshold":0.85
 	},
-	{"name":"Credibility", "src":"StubFilterSubsystem"},
-	{"name":"Quality", "src":"StubFilterSubsystem"},
-	{"name":"Relevance", "src":"StubFilterSubsystem"},
-	{"name":"Freshness", "src":"StubFilterSubsystem"},
-	{"name":"Local", "src":"StubFilterSubsystem"}
+	{"name":"Credibility", "src":"StubFilterSubsystemClient"},
+	{"name":"Quality", "src":"StubFilterSubsystemClient"},
+	{"name":"Relevance", "src":"StubFilterSubsystemClient"},
+	{"name":"Freshness", "src":"StubFilterSubsystemClient"},
+	{"name":"Local", "src":"StubFilterSubsystemClient"}
     ],
     "subsystems_ignore": [
 	{"name":"Credibility", "src":"CredibilityFilterSubsystem"},
@@ -45,8 +45,6 @@
     ],
     "feed_count":5000,
     "feeds":[
-{"src":"PolyFeedFetcher", "feed_url":"poly_MongoDB"},
-{"src":"ManifoldFeedFetcher", "feed_url":"will-the-bulletin-of-the-atomic-sci"},
 {"feed_url":"https://www.theblackvault.com/documentarchive/feed/", "weight":2},
 {"feed_url":"http://export.arxiv.org/rss/cs.AI", "weight":2, "feed_type":"arxiv"},
 {"feed_url":"https://techcrunch.com/feed/", "weight":2},
