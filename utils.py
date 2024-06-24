@@ -1,8 +1,22 @@
 from bs4 import BeautifulSoup
-import openai
+import importlib,logging
 from typing import List, Dict
 import numpy as np
 from scipy.spatial.distance import cosine
+import msgpack, msgpack_numpy,  base64
+
+msgpack_numpy.patch()
+
+def getSubsystem(config):
+    module, class_ = None,None
+    try:
+        module = importlib.import_module(config['src'])
+        class_ = getattr(module, config['src'])
+        return class_(config)
+    except Exception as e:
+        logging.error(f'Failed to load Subsystem from config {config}: {module} {class_} {e}')
+        return None
+
 
 def keyword_density(text, keyword_weights):
     # Normalize text
@@ -34,6 +48,18 @@ def get_embedding(text, key, model="text-embedding-ada-002"):
    openai.api_key = key
    return openai.Embedding.create(input = [text], model=model)['data'][0]['embedding']
 
+
+def encode(v):
+    if v is None:
+        return None
+    b = msgpack.packb(v)
+    return base64.b64encode(b).decode("utf-8")
+
+def decode(b):
+    if b is None:
+        return None
+    bd = base64.b64decode(b.encode("utf-8"))
+    return msgpack.unpackb(bd)
 
 def filter_by_cosine_similarity(items: List[Dict], comparison_vector: np.ndarray, threshold: float) -> List[Dict]:
     similar_items = []

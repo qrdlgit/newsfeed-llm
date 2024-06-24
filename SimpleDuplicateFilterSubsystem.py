@@ -1,7 +1,7 @@
 import utils,numpy as np
-import FilterSubsystemClient
+import FilterSubsystem
 
-class SimpleDuplicateFilterSubsystemClient(FilterSubsystemClient.FilterSubsystemClient):
+class SimpleDuplicateFilterSubsystem(FilterSubsystem.FilterSubsystem):
     def __init__(self, config):
         super().__init__(config)
         pass
@@ -12,7 +12,7 @@ class SimpleDuplicateFilterSubsystemClient(FilterSubsystemClient.FilterSubsystem
         mx, mx2 = indices[-1],indices[-2]
         #this is because we want to ignore ourself, which is going to be 1
         #logical coupling, but alternatives are awkward
-        print(scores[mx], scores[mx2])
+        #print(scores[mx], scores[mx2])
         if scores[mx] > 0.9999:
             return float(scores[mx2])
         else:

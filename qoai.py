@@ -5,7 +5,7 @@ import os
 import shutil
 
 # Set up the OpenAI API
-openai.api_key = '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'
+openai.api_key = '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'
 
 def get_response(prompt):
     response = openai.ChatCompletion.create(

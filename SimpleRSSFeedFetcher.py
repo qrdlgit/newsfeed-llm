@@ -43,7 +43,7 @@ class SimpleRSSFeedFetcher(FeedFetcher):
                 entry_text = ' '.join(str(entry.get(prop)) for prop in self.text_properties)
                 entry_text = extract_text(entry_text)
                 item = {'feed':self.feed_url, 'feed_type':self.feed_type, 'feed_weight':self.feed_weight, 
-                        'text':entry_text, 'title':entry['title'], 'link':entry['link'], 'date':entry_date}
+                        'text':entry_text, 'title':entry['title'], 'link':entry['link'], 'date':str(entry_date)}
                 new_feed_items.append(item)
         except Exception as e:
             logging.error(f"issue with {self.feed_url}  {e}")

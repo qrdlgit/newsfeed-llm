@@ -1,0 +1,55 @@
+{
+    "oai": "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",
+    "processing_interval":1,
+    "min_processing_interval":1,
+    "local_threshold":9999999,
+    "duplicate_threshold":1,
+    "back_days":5,
+    "db_subsystem_mongo": {
+	"src":"MongoDataStorageSubsystem",
+	"mongo_uri":"mongodb://192.168.1.86",
+	"db_name":"newsfeeds",
+	"collection_name": "feeditems"
+    },
+    "db_subsystem": {
+	"src":"SQLiteDataStorageSubsystem"
+    },
+
+    "Vectorize" : { "src":"VectorizeSubsystem"},
+
+    "subsystems":[
+	{
+	    "name":"Duplicate", 
+	    "src":"SimpleDuplicateFilterSubsystem",
+	    "similarity_threshold":0.85
+	},
+	{"name":"Credibility", "src":"StubFilterSubsystem"},
+	{"name":"Quality", "src":"StubFilterSubsystem"},
+	{"name":"Relevance", "src":"StubFilterSubsystem"},
+	{"name":"Freshness", "src":"StubFilterSubsystem"},
+	{"name":"Local", "src":"StubFilterSubsystem"}
+    ],
+    "subsystems_ignore": [
+	{"name":"Credibility", "src":"CredibilityFilterSubsystem"},
+	{"name":"Freshness", "src":"FreshnessFilterSubsystem"},
+	{
+	    "name":"Local", "src":"LocalFilterSubsystem",
+	    "keyword_weights":{
+		"news":{"gpt":1, "llm":1.2, "openai":0.8, " ai ":0.5},
+		"arxiv":{"microsoft":1, "@openai":1.2, "@mit.edu":0.8, "deepmind":0.5, "small language model":100}
+	    }
+	},
+	{"name":"Quality", "src":"QualityFilterSubsystem"},
+	{"name":"Relevance", "src":"RelevanceFilterSubsystem"}
+	   
+    ],
+    "feed_count":5000,
+    "feeds":[
+
+{"src":"MongoFeedFetcher", "feed_url":"Local_MongoDB"}
+
+
+ ]
+
+
+}

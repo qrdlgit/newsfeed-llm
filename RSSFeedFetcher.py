@@ -3,6 +3,8 @@ import hashlib
 from FeedCLI import *
 from datetime import datetime, timedelta
 import logging
+import bs4
+from urllib.parse import urlparse
 
 class RSSFeedFetcher(FeedFetcher):
     def __init__(self, config):
@@ -15,7 +17,7 @@ class RSSFeedFetcher(FeedFetcher):
         self.top_config = config.get('top', {})
         self.back_days = self.top_config.get('back_days',1)
 
-        self.seen_items = {}
+        self.seen_items = config['seen_hashes']
         self.last_seen_date = datetime.now() - timedelta(days=self.back_days)
 
     def get_date(self, entry):
@@ -46,11 +48,14 @@ class RSSFeedFetcher(FeedFetcher):
                     continue
                 # If this is a new item, add it to the list
                 if entry_hash not in self.seen_items:
-                    self.seen_items[entry_hash] = entry_hash_text
+                    self.seen_items[entry_hash] = True
                     entry_text = ' '.join(str(entry.get(prop)) for prop in self.text_properties)
-                    item = {'feed_type':self.feed_type, 'feed_weight':self.feed_weight, 
-                            'text':entry_text, 'title':entry['title'], 'link':entry['link']}
+                    soup = bs4.BeautifulSoup(entry_text, 'html.parser')
+                    entry_text = soup.get_text()
+                    item = {'hash':entry_hash, 'username':urlparse(entry['link']).netloc, 'feed_type':self.feed_type, 'feed_weight':self.feed_weight, 
+                            'text':entry_text, 'title':entry['title'], 'link':entry['link'], 'ts':entry_date.timestamp()}
                     new_feed_items.append(item)
+
         except Exception as e:
             logging.error(f"issue with {self.feed_url} {e}")
             return []
