@@ -7,6 +7,7 @@ from FilterSubsystem import FilterSubsystem
 import importlib
 import utils, gc,numpy as np, sys
 import argparse
+import os, sys
 
     
 # Use Python's built-in logging module for logging
@@ -42,6 +43,8 @@ class FeedFetcher(ABC):
             module = importlib.import_module(src)
             class_ = getattr(module, src)
             return class_(config)
+        except KeyboardInterrupt:
+            sys.exit()
         except Exception as e:
             config['top'] = "--"
             config['seen_hashes'] = "--"
@@ -130,6 +133,7 @@ class FeedCLI:
                 break
         logging.info(f"feeds added {len(self.feed_manager.get_feeds())}")
 
+        self.post_systems = config.get("post_systems", [])
         # Create Subsystem for each subsystem and store it
         for subsystem_config in config['subsystems']:
             subsystem_config['db'] = self.db
@@ -177,6 +181,8 @@ class FeedCLI:
     def process_feed(self, feed_fetcher, config):
         try:
             self.process_feed_try(feed_fetcher, config)
+        except KeyboardInterrupt:
+            sys.exit()
         except Exception as e:
             logging.error(f"Error with {feed_fetcher.feed_url}: {e}")
 
@@ -191,6 +197,7 @@ class FeedCLI:
             #customizable local to fast fail
             local_score = None if localS is None else localS.get_score(item)
             item['Local'] = local_score
+            
             if local_score and local_score > config['local_threshold']:
                 self.subsystems['DataStorage'].store_item(item)
                 continue
@@ -211,6 +218,12 @@ class FeedCLI:
                 subs = self.subsystems.get(ss, None)
                 item[ss] = None if subs is None else subs.get_score(item)
 
+            for ss in self.post_systems:
+                subs = self.subsystems.get(ss, None)
+                logging.info(f"post system {subs} {ss} ")
+                item[ss] = None if subs is None else subs.get_score(item)
+                logging.info(f"post system2 {subs} {ss} {item[ss]}")
+
             # Store the processed feed item
             self.subsystems['DataStorage'].store_item(item)
 
@@ -219,6 +232,8 @@ if __name__ == "__main__":
     feed = FeedCLI()
     try:
         feed.start_system()
+    except KeyboardInterrupt:
+        sys.exit()
     except Exception as e:
         print("Error starting system", e)
         feed.stop_system()

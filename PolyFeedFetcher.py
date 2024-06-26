@@ -13,7 +13,7 @@ sys.path.append('/home/tim/timl')
 import nosql
 import math
 host = "https://clob.polymarket.com"
-key = ""
+key = os.environ['POLY_KEY']
 client = ClobClient(host, key=key, chain_id=POLYGON)
 client.set_api_creds(client.create_or_derive_api_creds())
     

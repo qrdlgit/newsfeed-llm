@@ -1,5 +1,5 @@
 {
-    "oai": "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",
+    "oai": "OAI_KEY",
     "processing_interval":300,
     "min_processing_interval":10,
     "local_threshold":9999999,
@@ -27,8 +27,11 @@
 	{"name":"Quality", "src":"StubFilterSubsystemClient"},
 	{"name":"Relevance", "src":"StubFilterSubsystemClient"},
 	{"name":"Freshness", "src":"StubFilterSubsystemClient"},
-	{"name":"Local", "src":"StubFilterSubsystemClient"}
+	{"name":"Local", "src":"StubFilterSubsystemClient"},
+	{"name":"Discord", "src":"DiscordHookSubsystem"}
     ],
+    "post_systems":["Discord"],
+
     "subsystems_ignore": [
 	{"name":"Credibility", "src":"CredibilityFilterSubsystem"},
 	{"name":"Freshness", "src":"FreshnessFilterSubsystem"},
@@ -116,7 +119,6 @@
 {"feed_url":"https://www.motherjones.com/politics/feed/"},
 {"feed_url":"http://www.powerlineblog.com/index.xml"},
 {"feed_url":"https://www.unz.com/author/michelle-malkin//feed/"},
-{"feed_url":"http://www.newsbusters.org/blog/feed"},
 {"feed_url":"https://feeds.feedburner.com/guidofawkes"},
 {"feed_url":"https://therightscoop.com/feed/"},
 {"feed_url":"http://dailysignal.com/category/politics-topics/feed"},
